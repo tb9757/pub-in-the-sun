@@ -1,11 +1,10 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI
-import json
 import httpx
 import os
 
-app = FastAPI(title="Pub in the Sun")
 load_dotenv()
+app = FastAPI(title="Pub in the Sun")
 
 HERE_API = os.getenv('HERE_API_KEY')
 BASE_URL = "https://discover.search.hereapi.com/v1/discover?q=pub&limit=20"
@@ -18,8 +17,21 @@ def root():
 async def get_pubs(lat: float, lng: float, radius: int = 1000):
     pubs = []
     async with httpx.AsyncClient() as client:
-        response = await client.get(f"{BASE_URL}&in=circle:{lat},{lng};r=1000&apiKey={HERE_API}")
-    for item in response.json()['items']:
-        pubs.append({'title':item['title'],
-                     'latitude':item['position']['lat'])
+        response = await client.get(
+            f"{BASE_URL}&in=circle:{lat},{lng};{radius}&apiKey={HERE_API}"
+            )
+    data = response.json()
+    for item in data['items']:
+        categories = item.get('categories', [])
+        is_pub = any(
+            cat.get('id') == '200-2000-0011' and cat.get('primary') == True
+            for cat in categories
+        )
+        if is_pub:
+            pubs.append({
+                'title': item['title'],
+                'latitude': item['position']['lat'],
+                'longitude': item['position']['lng'],
+                'address': item['address']['label']
+                })
     return pubs
