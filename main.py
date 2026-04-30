@@ -10,13 +10,16 @@ load_dotenv()
 HERE_API = os.getenv('HERE_API_KEY')
 BASE_URL = "https://discover.search.hereapi.com/v1/discover?q=pub&limit=20"
 
-
-
 @app.get("/")
-async def root(lat, lng):
-    pub_names = []
+def root():
+    return {"message": "Pub in the Sun is running"}
+
+@app.get("/pubs")
+async def get_pubs(lat: float, lng: float, radius: int = 1000):
+    pubs = []
     async with httpx.AsyncClient() as client:
         response = await client.get(f"{BASE_URL}&in=circle:{lat},{lng};r=1000&apiKey={HERE_API}")
     for item in response.json()['items']:
-        pub_names.append(item['title'])
-    return pub_names
+        pubs.append({'title':item['title'],
+                     'latitude':item['position']['lat'])
+    return pubs
