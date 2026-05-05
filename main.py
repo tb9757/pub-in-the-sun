@@ -10,7 +10,7 @@ load_dotenv()
 app = FastAPI(title="Pub in the Sun")
 
 HERE_API = os.getenv('HERE_API_KEY')
-BASE_URL = "https://discover.search.hereapi.com/v1/discover?q=pub&limit=20"
+BASE_URL = "https://discover.search.hereapi.com/v1/discover?q=pub&limit=40"
 OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
 OPEN_ROUTER_API = os.getenv('OPEN_ROUTER_API_KEY')
 
@@ -54,7 +54,7 @@ def get_direction_description(azimuth):
         return "northwest"
 
 @app.get("/pubs")
-async def get_pubs(lat: float, lng: float, radius: int = 1000):
+async def get_pubs(lat: float, lng: float, radius: int = 1500):
     pubs = []
     async with httpx.AsyncClient() as client:
         response = await client.get(
@@ -114,7 +114,7 @@ async def get_weather(lat: float, lng: float):
 
     # store in cache
     weather_cache[cache_key] = {
-        "data": data,
+        "data": result,
         "timestamp": datetime.datetime.now(datetime.timezone.utc)
     }
 

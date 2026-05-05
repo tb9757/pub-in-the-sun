@@ -10,12 +10,10 @@ const addedPubs = new Set();
 let isLoading = false;
 let mapReady = false;
 
-
 // ── Helper: Set Status Message ────────────────────────────────────────────
 function setStatus(message) {
     document.getElementById("status").textContent = message;
 }
-
 
 // ── Helper: Get Sun Position via SunCalc ─────────────────────────────────
 function getSunPosition(lat, lng) {
@@ -27,12 +25,10 @@ function getSunPosition(lat, lng) {
     };
 }
 
-
 // ── Helper: Is It Sunny? ──────────────────────────────────────────────────
 function isSunny(cloudCover, sunAltitude) {
     return cloudCover < 60 && sunAltitude > 10;
 }
-
 
 // ── Helper: Create Coloured Marker ───────────────────────────────────────
 function createMarker(sunny) {
@@ -43,21 +39,22 @@ function createMarker(sunny) {
     });
 }
 
-
 // ── Close the Verdict Panel ───────────────────────────────────────────────
 function closePanel() {
     document.getElementById("verdict-panel").classList.add("hidden");
 }
 
-
 // ── Render Forecast Blocks ────────────────────────────────────────────────
 function renderForecast(forecastData, pubLat, pubLng) {
+    if (!forecastData) return;
     const container = document.getElementById("forecast-bars");
     container.innerHTML = "";
     const now = new Date();
 
     forecastData.forEach((cloudCover, index) => {
-        const futureTime = new Date(now.getTime() + (index + 1) * 60 * 60 * 1000);
+        const futureTime = new Date(
+            now.getTime() + (index + 1) * 60 * 60 * 1000,
+        );
         const sunPos = SunCalc.getPosition(futureTime, pubLat, pubLng);
         const sunAltitude = (sunPos.altitude * 180) / Math.PI;
         const sunny = isSunny(cloudCover, sunAltitude);
@@ -75,9 +72,14 @@ function renderForecast(forecastData, pubLat, pubLng) {
     });
 }
 
-
 // ── Fetch Verdict from Backend ────────────────────────────────────────────
-async function fetchVerdict(pub, cloudCover, sunAltitude, sunAzimuth, forecast) {
+async function fetchVerdict(
+    pub,
+    cloudCover,
+    sunAltitude,
+    sunAzimuth,
+    forecast,
+) {
     document.getElementById("pub-name").textContent = pub.title;
     document.getElementById("pub-address").textContent = pub.address;
     document.getElementById("verdict-text").textContent = "Getting verdict...";
@@ -105,7 +107,6 @@ async function fetchVerdict(pub, cloudCover, sunAltitude, sunAzimuth, forecast) 
     }
 }
 
-
 // ── Load Pubs onto the Map ────────────────────────────────────────────────
 async function loadPubs(lat, lng) {
     if (isLoading) return;
@@ -130,7 +131,9 @@ async function loadPubs(lat, lng) {
             const pubLat = pub.latitude;
             const pubLng = pub.longitude;
 
-            const weatherResponse = await fetch(`/weather?lat=${pubLat}&lng=${pubLng}`);
+            const weatherResponse = await fetch(
+                `/weather?lat=${pubLat}&lng=${pubLng}`,
+            );
             const weatherData = await weatherResponse.json();
             const cloudCover = weatherData.cloud_cover;
             const forecast = weatherData.forecast;
@@ -145,7 +148,13 @@ async function loadPubs(lat, lng) {
             L.marker([pubLat, pubLng], { icon: marker })
                 .addTo(map)
                 .on("click", () => {
-                    fetchVerdict(pub, cloudCover, sunAltitude, sunAzimuth, forecast);
+                    fetchVerdict(
+                        pub,
+                        cloudCover,
+                        sunAltitude,
+                        sunAzimuth,
+                        forecast,
+                    );
                 });
         }
     } catch (error) {
@@ -155,7 +164,6 @@ async function loadPubs(lat, lng) {
         isLoading = false;
     }
 }
-
 
 // ── Get User Location & Kick Everything Off ───────────────────────────────
 if (navigator.geolocation) {
@@ -172,7 +180,9 @@ if (navigator.geolocation) {
                 color: "#1A1208",
                 weight: 2,
                 fillOpacity: 1,
-            }).addTo(map).bindPopup("You are here");
+            })
+                .addTo(map)
+                .bindPopup("You are here");
 
             // Load initial pubs then mark map as ready for pan events
             loadPubs(lat, lng).then(() => {
@@ -180,14 +190,15 @@ if (navigator.geolocation) {
             });
         },
         (error) => {
-            setStatus("Location access denied — please enable location and refresh.");
+            setStatus(
+                "Location access denied — please enable location and refresh.",
+            );
             console.error(error);
         },
     );
 } else {
     setStatus("Geolocation is not supported by your browser.");
 }
-
 
 // ── Close Panel and Reset Loading on Pan ─────────────────────────────────
 // Only fires after initial load is complete
@@ -196,7 +207,6 @@ map.on("movestart", () => {
     closePanel();
     isLoading = false;
 });
-
 
 // ── Load New Pubs When Map is Panned ─────────────────────────────────────
 map.on("moveend", () => {
