@@ -1,9 +1,9 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 import httpx
 import os
 from pydantic import BaseModel
-
 
 load_dotenv()
 app = FastAPI(title="Pub in the Sun")
@@ -20,22 +20,18 @@ class SunData(BaseModel):
     sun_altitude: float
     sun_azimuth: float
 
-@app.get("/")
-def root():
-    return {"message": "Pub in The Sun is running"}
-
 @app.get("/pubs")
 async def get_pubs(lat: float, lng: float, radius: int = 1000):
     pubs = []
     async with httpx.AsyncClient() as client:
         response = await client.get(
-            f"{BASE_URL}&in=circle:{lat},{lng};{radius}&apiKey={HERE_API}"
+            f"{BASE_URL}&in=circle:{lat},{lng};r={radius}&apiKey={HERE_API}"
             )
     data = response.json()
     for item in data['items']:
         categories = item.get('categories', [])
         is_pub = any(
-            cat.get('id') == '200-2000-0011' and cat.get('primary') == True
+            cat.get('id') == '200-2000-0011' and cat.get('primary')
             for cat in categories
         )
         if is_pub:
@@ -131,3 +127,5 @@ async def get_verdict(data: SunData):
         return f"Error contacting OpenRouter: {e}"
     except (KeyError, IndexError):
         return "Error: Unexpected response format from OpenRouter."
+
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
