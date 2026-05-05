@@ -11,7 +11,7 @@ BASE_URL = "https://discover.search.hereapi.com/v1/discover?q=pub&limit=20"
 
 @app.get("/")
 def root():
-    return {"message": "Pub in the Sun is running"}
+    return {"message": "Pub in The Sun is running"}
 
 @app.get("/pubs")
 async def get_pubs(lat: float, lng: float, radius: int = 1000):
@@ -35,3 +35,14 @@ async def get_pubs(lat: float, lng: float, radius: int = 1000):
                 'address': item['address']['label']
                 })
     return pubs
+
+OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
+
+@app.get("/weather")
+async def get_weather(lat: float, lng: float):
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            f"{OPEN_METEO_URL}?latitude={lat}&longitude={lng}&current=cloud_cover"
+            )
+    data =  response.json()
+    return {"cloud_cover":data['current']['cloud_cover']}
