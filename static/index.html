@@ -1,18 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pub in the Sun</title>
 
     <!-- Leaflet CSS - the map styling -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <!-- Google Fonts - Playfair Display for headings, Source Sans for body -->
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Source+Sans+3:wght@400;600&display=swap"
+        rel="stylesheet">
 
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
     <!-- Header -->
@@ -36,6 +40,10 @@
         <div id="verdict-body">
             <p id="verdict-text">Getting verdict...</p>
         </div>
+        <div id="forecast-section">
+            <p class="forecast-label">Next few hours</p>
+            <div id="forecast-bars"></div>
+        </div>
         <button id="close-btn" onclick="closePanel()">Close</button>
     </div>
 
@@ -49,4 +57,5 @@
     <script src="app.js"></script>
 
 </body>
+
 </html>
