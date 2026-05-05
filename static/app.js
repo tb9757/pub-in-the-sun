@@ -63,6 +63,7 @@ function renderForecast(forecastData, pubLat, pubLng) {
         const block = document.createElement("div");
         block.className = "forecast-block";
         block.style.background = sunny ? "var(--sunny)" : "var(--cloudy)";
+        const label = index === 0 ? "Now" : `${hour}:00`;
         block.innerHTML = `
             <div>${sunny ? "☀️" : "☁️"}</div>
             <div>${hour}:00</div>
