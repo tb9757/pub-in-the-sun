@@ -32,6 +32,24 @@ def get_altitude_description(altitude):
     else:
         return "very low"
 
+def get_direction_description(azimuth):
+    if azimuth < 22.5 or azimuth >= 337.5:
+        return "north"
+    elif azimuth < 67.5:
+        return "northeast"
+    elif azimuth < 112.5:
+        return "east"
+    elif azimuth < 157.5:
+        return "southeast"
+    elif azimuth < 202.5:
+        return "south"
+    elif azimuth < 247.5:
+        return "southwest"
+    elif azimuth < 292.5:
+        return "west"
+    else:
+        return "northwest"
+
 @app.get("/pubs")
 async def get_pubs(lat: float, lng: float, radius: int = 1000):
     pubs = []
