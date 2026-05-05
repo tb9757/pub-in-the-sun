@@ -7,6 +7,9 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "© OpenStreetMap contributors",
 }).addTo(map);
 
+// Track which pubs have already been added to avoid duplicates on pan
+const addedPubs = new Set();
+
 // ── Helper: Set Status Message ────────────────────────────────────────────
 function setStatus(message) {
     document.getElementById("status").textContent = message;
@@ -130,6 +133,10 @@ async function loadPubs(lat, lng) {
 
         // For each pub, get weather and sun position, then add a marker
         for (const pub of pubs) {
+            // Skip if already on the map
+            if (addedPubs.has(pub.id)) continue;
+            addedPubs.add(pub.id);
+
             const pubLat = pub.latitude;
             const pubLng = pub.longitude;
 
@@ -203,3 +210,9 @@ if (navigator.geolocation) {
 } else {
     setStatus("Geolocation is not supported by your browser.");
 }
+
+// ── Load New Pubs When Map is Panned ─────────────────────────────────────
+map.on("moveend", () => {
+    const centre = map.getCenter();
+    loadPubs(centre.lat, centre.lng);
+});
