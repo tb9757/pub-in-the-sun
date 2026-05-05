@@ -60,9 +60,15 @@ async def get_pubs(lat: float, lng: float, radius: int = 1000):
     data = response.json()
     for item in data['items']:
         categories = item.get('categories', [])
-        is_pub = any(
-            cat.get('id') == '200-2000-0011' and cat.get('primary')
-            for cat in categories
+        is_pub = (
+            item.get('ontologyId') == 'here:cm:ontology:bar_pub'
+            and (
+                any(cat.get('id') == '200-2000-0011' and cat.get('primary') for cat in categories)
+                or (
+                    any(cat.get('id') == '300-3000-0350' and cat.get('primary') for cat in categories)
+                    and any(cat.get('id') == '200-2000-0011' for cat in categories)
+                )
+            )
         )
         if is_pub:
             pubs.append({
