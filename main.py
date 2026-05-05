@@ -87,7 +87,7 @@ async def get_weather(lat: float, lng: float):
             f"""{OPEN_METEO_URL}?latitude={lat}&longitude={lng}&current=cloud_cover&hourly=cloud_cover&forecast_days=1"""
             )
     data =  response.json()
-    hour = datetime.datetime.now().hour
+    hour = datetime.datetime.now(datetime.timezone.utc).hour
     forecast_hours = [min(hour + i, 23) for i in range(1, 5)]
     forecast = [data['hourly']['cloud_cover'][h] for h in forecast_hours]
     
