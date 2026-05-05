@@ -75,6 +75,7 @@ async def get_pubs(lat: float, lng: float, radius: int = 1000):
         )
         if is_pub:
             pubs.append({
+                'id': item['id'],
                 'title': item['title'],
                 'latitude': item['position']['lat'],
                 'longitude': item['position']['lng'],
