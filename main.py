@@ -14,6 +14,8 @@ BASE_URL = "https://discover.search.hereapi.com/v1/discover?q=pub&limit=20"
 OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
 OPEN_ROUTER_API = os.getenv('OPEN_ROUTER_API_KEY')
 
+weather_cache = {}
+
 class SunData(BaseModel):
     pub_name: str
     address: str
@@ -82,9 +84,11 @@ async def get_pubs(lat: float, lng: float, radius: int = 1000):
 
 @app.get("/weather")
 async def get_weather(lat: float, lng: float):
+    rounded_lat = round(lat, 2)
+    rounded_lng = round(lng, 2)
     async with httpx.AsyncClient() as client:
         response = await client.get(
-            f"""{OPEN_METEO_URL}?latitude={lat}&longitude={lng}&current=cloud_cover&hourly=cloud_cover&forecast_days=1"""
+            f"""{OPEN_METEO_URL}?latitude={rounded_lat}&longitude={rounded_lng}&current=cloud_cover&hourly=cloud_cover&forecast_days=1"""
             )
     data =  response.json()
     hour = datetime.datetime.now(datetime.timezone.utc).hour
