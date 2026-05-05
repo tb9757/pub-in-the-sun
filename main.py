@@ -86,19 +86,40 @@ async def get_pubs(lat: float, lng: float, radius: int = 1000):
 async def get_weather(lat: float, lng: float):
     rounded_lat = round(lat, 2)
     rounded_lng = round(lng, 2)
+    cache_key = f"{rounded_lat},{rounded_lng}"
+
+    # check cache
+    cached = weather_cache.get(cache_key)
+    if cached:
+        age = datetime.datetime.now(datetime.timezone.utc) - cached["timestamp"]
+        if age.total_seconds() < 900:  # 900 seconds = 15 minutes
+            return cached["data"]
+        
+    # if the cache missed or is stale call API
     async with httpx.AsyncClient() as client:
         response = await client.get(
             f"""{OPEN_METEO_URL}?latitude={rounded_lat}&longitude={rounded_lng}&current=cloud_cover&hourly=cloud_cover&forecast_days=1"""
             )
     data =  response.json()
+    
     hour = datetime.datetime.now(datetime.timezone.utc).hour
     forecast_hours = [min(hour + i, 23) for i in range(1, 5)]
     forecast = [data['hourly']['cloud_cover'][h] for h in forecast_hours]
     
-    return {"cloud_cover":data['current']['cloud_cover'], 
-            "forecast":forecast
-            }
+    result = {
+        "cloud_cover":data['current']['cloud_cover'], 
+        "forecast":forecast
+    }
 
+    # store in cache
+    weather_cache[cache_key] = {
+        "data": data,
+        "timestamp": datetime.datetime.now(datetime.timezone.utc)
+    }
+
+    return result
+    
+    
 @app.post("/verdict")
 async def get_verdict(data: SunData):
     
