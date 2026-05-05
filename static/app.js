@@ -52,9 +52,7 @@ function renderForecast(forecastData, pubLat, pubLng) {
     const now = new Date();
 
     forecastData.forEach((cloudCover, index) => {
-        const futureTime = new Date(
-            now.getTime() + (index + 1) * 60 * 60 * 1000,
-        );
+        const futureTime = new Date(now.getTime() + index * 60 * 60 * 1000);
         const sunPos = SunCalc.getPosition(futureTime, pubLat, pubLng);
         const sunAltitude = (sunPos.altitude * 180) / Math.PI;
         const sunny = isSunny(cloudCover, sunAltitude);
@@ -66,7 +64,7 @@ function renderForecast(forecastData, pubLat, pubLng) {
         const label = index === 0 ? "Now" : `${hour}:00`;
         block.innerHTML = `
             <div>${sunny ? "☀️" : "☁️"}</div>
-            <div>${hour}:00</div>
+            <div>${label}</div>
             <div>${cloudCover}%</div>
         `;
         container.appendChild(block);
