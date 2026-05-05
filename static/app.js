@@ -9,6 +9,7 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
 
 // Track which pubs have already been added to avoid duplicates on pan
 const addedPubs = new Set();
+let isLoading = false;
 
 // ── Helper: Set Status Message ────────────────────────────────────────────
 function setStatus(message) {
@@ -117,62 +118,64 @@ async function fetchVerdict(
 
 // ── Load Pubs onto the Map ────────────────────────────────────────────────
 async function loadPubs(lat, lng) {
+    if (isLoading) return;
+    isLoading = true;
     setStatus("Finding nearby pubs...");
 
     try {
-        // Fetch pubs from our FastAPI backend
         const response = await fetch(`/pubs?lat=${lat}&lng=${lng}`);
         const pubs = await response.json();
 
         if (pubs.length === 0) {
             setStatus("No pubs found nearby. Try a different location.");
+            isLoading = false;
             return;
         }
 
+        // Filter out pubs already on the map
+        const newPubs = pubs.filter((pub) => !addedPubs.has(pub.id));
+        newPubs.forEach((pub) => addedPubs.add(pub.id));
+
         setStatus(`Found ${pubs.length} pubs nearby — tap one for a verdict`);
 
-        // For each pub, get weather and sun position, then add a marker
-        for (const pub of pubs) {
-            // Skip if already on the map
-            if (addedPubs.has(pub.id)) continue;
-            addedPubs.add(pub.id);
+        // Fire all weather calls in parallel
+        await Promise.all(
+            newPubs.map(async (pub) => {
+                const pubLat = pub.latitude;
+                const pubLng = pub.longitude;
 
-            const pubLat = pub.latitude;
-            const pubLng = pub.longitude;
+                const weatherResponse = await fetch(
+                    `/weather?lat=${pubLat}&lng=${pubLng}`,
+                );
+                const weatherData = await weatherResponse.json();
+                const cloudCover = weatherData.cloud_cover;
+                const forecast = weatherData.forecast;
 
-            // Get cloud cover and forecast from our weather endpoint
-            const weatherResponse = await fetch(
-                `/weather?lat=${pubLat}&lng=${pubLng}`,
-            );
-            const weatherData = await weatherResponse.json();
-            const cloudCover = weatherData.cloud_cover;
-            const forecast = weatherData.forecast;
+                const sunPos = getSunPosition(pubLat, pubLng);
+                const sunAltitude = sunPos.altitude;
+                const sunAzimuth = sunPos.azimuth;
 
-            // Get sun position from SunCalc (runs in browser, no API call needed)
-            const sunPos = getSunPosition(pubLat, pubLng);
-            const sunAltitude = sunPos.altitude;
-            const sunAzimuth = sunPos.azimuth;
+                const sunny = isSunny(cloudCover, parseFloat(sunAltitude));
+                const marker = createMarker(sunny);
 
-            // Decide marker colour
-            const sunny = isSunny(cloudCover, parseFloat(sunAltitude));
-            const marker = createMarker(sunny);
-
-            // Add marker to map
-            L.marker([pubLat, pubLng], { icon: marker })
-                .addTo(map)
-                .on("click", () => {
-                    fetchVerdict(
-                        pub,
-                        cloudCover,
-                        sunAltitude,
-                        sunAzimuth,
-                        forecast,
-                    );
-                });
-        }
+                L.marker([pubLat, pubLng], { icon: marker })
+                    .addTo(map)
+                    .on("click", () => {
+                        fetchVerdict(
+                            pub,
+                            cloudCover,
+                            sunAltitude,
+                            sunAzimuth,
+                            forecast,
+                        );
+                    });
+            }),
+        );
     } catch (error) {
         setStatus("Something went wrong loading pubs. Please refresh.");
         console.error(error);
+    } finally {
+        isLoading = false;
     }
 }
 
