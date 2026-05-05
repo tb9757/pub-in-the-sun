@@ -20,6 +20,18 @@ class SunData(BaseModel):
     sun_altitude: float
     sun_azimuth: float
 
+def get_altitude_description(altitude):
+    if altitude > 50:
+        return "very high"
+    elif 40 <= altitude < 50:
+        return "high"
+    elif 30 <= altitude < 40:
+        return "moderate"
+    elif 20 <= altitude < 30:
+        return "low"
+    else:
+        return "very low"
+
 @app.get("/pubs")
 async def get_pubs(lat: float, lng: float, radius: int = 1000):
     pubs = []
@@ -97,8 +109,8 @@ async def get_verdict(data: SunData):
     
     pub_data = f"""The pub is called {data.pub_name}, located 
     at {data.address}. Current cloud cover: {data.cloud_cover}%
-    Sun altitude: {data.sun_altitude} degrees above the horizon
-    Sun azimuth: {data.sun_azimuth} degrees (0=North, 90=East, 180=South, 270=West)
+    Sun altitude: {data.sun_altitude} degrees above the horizon ({get_altitude_description(data.sun_altitude)})
+    Sun azimuth: {data.sun_azimuth} degrees ({get_direction_description(data.sun_azimuth)})
     """
 
     headers = {
