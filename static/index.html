@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pub in the Sun</title>
+
+    <!-- Leaflet CSS - the map styling -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+    <!-- Google Fonts - Playfair Display for headings, Source Sans for body -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <h1>🍺 Pub in the Sun</h1>
+        <p class="tagline">Find a sunny pint near you</p>
+    </header>
+
+    <!-- Status message shown while loading -->
+    <div id="status">Finding your location...</div>
+
+    <!-- The map -->
+    <div id="map"></div>
+
+    <!-- Panel that slides up when you tap a pub marker -->
+    <div id="verdict-panel" class="hidden">
+        <div id="verdict-header">
+            <h2 id="pub-name"></h2>
+            <p id="pub-address"></p>
+        </div>
+        <div id="verdict-body">
+            <p id="verdict-text">Getting verdict...</p>
+        </div>
+        <button id="close-btn" onclick="closePanel()">Close</button>
+    </div>
+
+    <!-- Leaflet JS - the map library -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- SunCalc JS - sun position calculations -->
+    <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
+
+    <!-- Our app logic -->
+    <script src="app.js"></script>
+
+</body>
+</html>
