@@ -1,8 +1,6 @@
 // ── Map Setup ─────────────────────────────────────────────────────────────
-// Initialise the map centred on the UK — will re-centre once we get location
 const map = L.map("map").setView([52.5, -1.5], 6);
 
-// Add OpenStreetMap tiles — this is the actual map imagery
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "© OpenStreetMap contributors",
 }).addTo(map);
@@ -10,15 +8,16 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
 // Track which pubs have already been added to avoid duplicates on pan
 const addedPubs = new Set();
 let isLoading = false;
+let mapReady = false;
+
 
 // ── Helper: Set Status Message ────────────────────────────────────────────
 function setStatus(message) {
     document.getElementById("status").textContent = message;
 }
 
+
 // ── Helper: Get Sun Position via SunCalc ─────────────────────────────────
-// SunCalc gives us altitude (height above horizon) and azimuth (compass direction)
-// We convert azimuth from radians to degrees for the backend
 function getSunPosition(lat, lng) {
     const now = new Date();
     const position = SunCalc.getPosition(now, lat, lng);
@@ -28,11 +27,12 @@ function getSunPosition(lat, lng) {
     };
 }
 
+
 // ── Helper: Is It Sunny? ──────────────────────────────────────────────────
-// Simple threshold check for marker colour — not the AI verdict, just the dot
 function isSunny(cloudCover, sunAltitude) {
     return cloudCover < 60 && sunAltitude > 10;
 }
+
 
 // ── Helper: Create Coloured Marker ───────────────────────────────────────
 function createMarker(sunny) {
@@ -43,56 +43,46 @@ function createMarker(sunny) {
     });
 }
 
+
 // ── Close the Verdict Panel ───────────────────────────────────────────────
 function closePanel() {
     document.getElementById("verdict-panel").classList.add("hidden");
 }
 
+
 // ── Render Forecast Blocks ────────────────────────────────────────────────
 function renderForecast(forecastData, pubLat, pubLng) {
     const container = document.getElementById("forecast-bars");
     container.innerHTML = "";
-
     const now = new Date();
 
     forecastData.forEach((cloudCover, index) => {
-        const futureTime = new Date(
-            now.getTime() + (index + 1) * 60 * 60 * 1000,
-        );
+        const futureTime = new Date(now.getTime() + (index + 1) * 60 * 60 * 1000);
         const sunPos = SunCalc.getPosition(futureTime, pubLat, pubLng);
         const sunAltitude = (sunPos.altitude * 180) / Math.PI;
         const sunny = isSunny(cloudCover, sunAltitude);
-
         const hour = futureTime.getHours();
-        const label = `${hour}:00`;
 
         const block = document.createElement("div");
         block.className = "forecast-block";
         block.style.background = sunny ? "var(--sunny)" : "var(--cloudy)";
         block.innerHTML = `
             <div>${sunny ? "☀️" : "☁️"}</div>
-            <div>${label}</div>
+            <div>${hour}:00</div>
             <div>${cloudCover}%</div>
         `;
         container.appendChild(block);
     });
 }
 
+
 // ── Fetch Verdict from Backend ────────────────────────────────────────────
-async function fetchVerdict(
-    pub,
-    cloudCover,
-    sunAltitude,
-    sunAzimuth,
-    forecast,
-) {
-    // Show the panel immediately with a loading message
+async function fetchVerdict(pub, cloudCover, sunAltitude, sunAzimuth, forecast) {
     document.getElementById("pub-name").textContent = pub.title;
     document.getElementById("pub-address").textContent = pub.address;
     document.getElementById("verdict-text").textContent = "Getting verdict...";
     document.getElementById("verdict-panel").classList.remove("hidden");
 
-    // Render forecast blocks immediately — no API call needed
     renderForecast(forecast, pub.latitude, pub.longitude);
 
     try {
@@ -107,7 +97,6 @@ async function fetchVerdict(
                 sun_azimuth: parseFloat(sunAzimuth),
             }),
         });
-
         const verdict = await response.json();
         document.getElementById("verdict-text").textContent = verdict;
     } catch (error) {
@@ -116,11 +105,6 @@ async function fetchVerdict(
     }
 }
 
-// ── Close Panel and Reset Loading on Pan ─────────────────────────────────
-map.on("movestart", () => {
-    closePanel();
-    isLoading = false;
-});
 
 // ── Load Pubs onto the Map ────────────────────────────────────────────────
 async function loadPubs(lat, lng) {
@@ -146,9 +130,7 @@ async function loadPubs(lat, lng) {
             const pubLat = pub.latitude;
             const pubLng = pub.longitude;
 
-            const weatherResponse = await fetch(
-                `/weather?lat=${pubLat}&lng=${pubLng}`,
-            );
+            const weatherResponse = await fetch(`/weather?lat=${pubLat}&lng=${pubLng}`);
             const weatherData = await weatherResponse.json();
             const cloudCover = weatherData.cloud_cover;
             const forecast = weatherData.forecast;
@@ -163,13 +145,7 @@ async function loadPubs(lat, lng) {
             L.marker([pubLat, pubLng], { icon: marker })
                 .addTo(map)
                 .on("click", () => {
-                    fetchVerdict(
-                        pub,
-                        cloudCover,
-                        sunAltitude,
-                        sunAzimuth,
-                        forecast,
-                    );
+                    fetchVerdict(pub, cloudCover, sunAltitude, sunAzimuth, forecast);
                 });
         }
     } catch (error) {
@@ -180,6 +156,7 @@ async function loadPubs(lat, lng) {
     }
 }
 
+
 // ── Get User Location & Kick Everything Off ───────────────────────────────
 if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
@@ -187,27 +164,23 @@ if (navigator.geolocation) {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
 
-            // Centre map on user
             map.setView([lat, lng], 15);
 
-            // Add a marker for the user's position
             L.circleMarker([lat, lng], {
                 radius: 8,
                 fillColor: "#E8A020",
                 color: "#1A1208",
                 weight: 2,
                 fillOpacity: 1,
-            })
-                .addTo(map)
-                .bindPopup("You are here");
+            }).addTo(map).bindPopup("You are here");
 
-            // Load pubs around the user
-            loadPubs(lat, lng);
+            // Load initial pubs then mark map as ready for pan events
+            loadPubs(lat, lng).then(() => {
+                mapReady = true;
+            });
         },
         (error) => {
-            setStatus(
-                "Location access denied — please enable location and refresh.",
-            );
+            setStatus("Location access denied — please enable location and refresh.");
             console.error(error);
         },
     );
@@ -215,8 +188,19 @@ if (navigator.geolocation) {
     setStatus("Geolocation is not supported by your browser.");
 }
 
+
+// ── Close Panel and Reset Loading on Pan ─────────────────────────────────
+// Only fires after initial load is complete
+map.on("movestart", () => {
+    if (!mapReady) return;
+    closePanel();
+    isLoading = false;
+});
+
+
 // ── Load New Pubs When Map is Panned ─────────────────────────────────────
 map.on("moveend", () => {
+    if (!mapReady) return;
     const centre = map.getCenter();
     loadPubs(centre.lat, centre.lng);
 });
