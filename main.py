@@ -2,6 +2,8 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 import httpx
 import os
+from pydantic import BaseModel
+
 
 load_dotenv()
 app = FastAPI(title="Pub in the Sun")
@@ -10,6 +12,13 @@ HERE_API = os.getenv('HERE_API_KEY')
 BASE_URL = "https://discover.search.hereapi.com/v1/discover?q=pub&limit=20"
 OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
 OPEN_ROUTER_API = os.getenv('OPEN_ROUTER_API_KEY')
+
+class SunData(BaseModel):
+    pub_name: str
+    address: str
+    cloud_cover: int
+    sun_altitude: float
+    sun_azimuth: float
 
 @app.get("/")
 def root():
@@ -46,3 +55,79 @@ async def get_weather(lat: float, lng: float):
             )
     data =  response.json()
     return {"cloud_cover":data['current']['cloud_cover']}
+
+@app.post("/verdict")
+async def get_verdict(data: SunData):
+    
+    SYSTEM_PROMPT = """You are a knowledgeable and opinionated British pub enthusiast. 
+    Your job is to tell someone whether the beer garden at a specific pub is likely 
+    to be sunny right now, based on current weather and sun position data.
+
+    You will be given:
+    - The pub name and address
+    - Current cloud cover percentage
+    - Sun altitude (how high the sun is above the horizon in degrees)
+    - Sun azimuth (the compass direction the sun is coming from in degrees, 
+    0=North, 90=East, 180=South, 270=West)
+
+    Reason about sunshine likelihood as follows:
+
+    If cloud cover is above 60%, it is unlikely to be sunny regardless of orientation. 
+    Say so directly.
+
+    If cloud cover is below 40% and sun altitude is above 40 degrees, the sun is high 
+    enough that most beer gardens will be sunny regardless of which way they face. 
+    Give a confident positive verdict.
+
+    If cloud cover is below 40% but sun altitude is between 10 and 40 degrees, 
+    orientation starts to matter. Use the sun azimuth to describe which direction 
+    the sun is coming from, and give a conditional verdict — for example 
+    "if the garden faces south or west it will be catching the sun right now, 
+    north or east facing gardens may be in shade."
+
+    Use the pub's street address to reason about likely garden orientation, 
+    considering that most beer gardens are at the back of the pub. 
+    A pub on the south side of a street will likely have a south facing back garden 
+    which catches the sun well. A pub on the north side will likely have a north 
+    facing back garden which may be in shade. Cross reference this with the sun's 
+    azimuth to give your best guess. Make clear it's a guess, but commit to it.
+
+    If sun altitude is below 10 degrees, the sun is too low to feel warm regardless 
+    of cloud cover. Say so.
+
+    Be warm, conversational and specific — like a friend who knows their pubs. 
+    Keep your verdict to 2-3 sentences. Never pretend to know which way the garden 
+    faces with certainty."""
+    
+    pub_data = f"""The pub is called {data.pub_name}, located 
+    at {data.address}. Current cloud cover: {data.cloud_cover}%
+    Sun altitude: {data.sun_altitude} degrees above the horizon
+    Sun azimuth: {data.sun_azimuth} degrees (0=North, 90=East, 180=South, 270=West)
+    """
+
+    headers = {
+        "Authorization": f"Bearer {OPEN_ROUTER_API}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "model": "anthropic/claude-sonnet-4-5",
+        "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": pub_data}
+        ]
+    }
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers=headers,
+                json=payload,
+                timeout=60
+            )
+        response.raise_for_status()
+        result = response.json()
+        return result["choices"][0]["message"]["content"]
+    except httpx.HTTPError as e:
+        return f"Error contacting OpenRouter: {e}"
+    except (KeyError, IndexError):
+        return "Error: Unexpected response format from OpenRouter."
