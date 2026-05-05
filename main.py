@@ -1,3 +1,4 @@
+import datetime
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -83,10 +84,16 @@ async def get_pubs(lat: float, lng: float, radius: int = 1000):
 async def get_weather(lat: float, lng: float):
     async with httpx.AsyncClient() as client:
         response = await client.get(
-            f"{OPEN_METEO_URL}?latitude={lat}&longitude={lng}&current=cloud_cover"
+            f"""{OPEN_METEO_URL}?latitude={lat}&longitude={lng}&current=cloud_cover&hourly=cloud_cover&forecast_days=1"""
             )
     data =  response.json()
-    return {"cloud_cover":data['current']['cloud_cover']}
+    hour = datetime.datetime.now().hour
+    forecast_hours = [min(hour + i, 23) for i in range(1, 5)]
+    forecast = [data['hourly']['cloud_cover'][h] for h in forecast_hours]
+    
+    return {"cloud_cover":data['current']['cloud_cover'], 
+            "forecast":forecast
+            }
 
 @app.post("/verdict")
 async def get_verdict(data: SunData):
