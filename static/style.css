@@ -162,6 +162,7 @@ header .tagline {
     width: 24px;
     height: 24px;
     box-shadow: 0 0 8px rgba(245, 200, 66, 0.6);
+    cursor: pointer;
 }
 
 .cloudy-marker {
@@ -170,4 +171,5 @@ header .tagline {
     border-radius: 50%;
     width: 24px;
     height: 24px;
+    cursor: pointer;
 }
