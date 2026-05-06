@@ -146,6 +146,7 @@ async function loadPubs(lat, lng) {
 
             L.marker([pubLat, pubLng], { icon: marker })
                 .addTo(map)
+                .bindTooltip(pub.title, { permanent: false, direction: "top" })
                 .on("click", () => {
                     fetchVerdict(
                         pub,
