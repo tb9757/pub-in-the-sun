@@ -136,6 +136,28 @@ header .tagline {
     color: var(--dark);
 }
 
+#search-btn {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--dark);
+    color: var(--amber);
+    border: 2px solid var(--amber);
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-family: "Source Sans 3", sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    z-index: 999;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+#search-btn:hover {
+    background: var(--mid);
+}
+
 #close-btn {
     background: var(--dark);
     color: var(--amber);
@@ -172,4 +194,10 @@ header .tagline {
     width: 24px;
     height: 24px;
     cursor: pointer;
+}
+
+.leaflet-tooltip {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
