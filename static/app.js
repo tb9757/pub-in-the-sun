@@ -9,12 +9,10 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
 const addedPubs = new Set();
 let isLoading = false;
 
-
 // ── Helper: Set Status Message ────────────────────────────────────────────
 function setStatus(message) {
     document.getElementById("status").textContent = message;
 }
-
 
 // ── Helper: Get Sun Position via SunCalc ─────────────────────────────────
 function getSunPosition(lat, lng) {
@@ -26,12 +24,10 @@ function getSunPosition(lat, lng) {
     };
 }
 
-
 // ── Helper: Is It Sunny? ──────────────────────────────────────────────────
 function isSunny(cloudCover, sunAltitude) {
     return cloudCover < 60 && sunAltitude > 10;
 }
-
 
 // ── Helper: Create Coloured Marker ───────────────────────────────────────
 function createMarker(sunny) {
@@ -42,12 +38,10 @@ function createMarker(sunny) {
     });
 }
 
-
 // ── Close the Verdict Panel ───────────────────────────────────────────────
 function closePanel() {
     document.getElementById("verdict-panel").classList.add("hidden");
 }
-
 
 // ── Search This Area Button ───────────────────────────────────────────────
 function searchArea() {
@@ -55,13 +49,13 @@ function searchArea() {
     loadPubs(centre.lat, centre.lng);
 }
 
-
 // ── Render Forecast Blocks ────────────────────────────────────────────────
 function renderForecast(forecastData, pubLat, pubLng) {
     if (!forecastData) return;
     const container = document.getElementById("forecast-bars");
     container.innerHTML = "";
     const now = new Date();
+    const sunset = SunCalc.getTimes(now, pubLat, pubLng).sunset; // calculate the sunset hour
 
     forecastData.forEach((cloudCover, index) => {
         const futureTime = new Date(now.getTime() + index * 60 * 60 * 1000);
@@ -69,6 +63,8 @@ function renderForecast(forecastData, pubLat, pubLng) {
         const sunAltitude = (sunPos.altitude * 180) / Math.PI;
         const sunny = isSunny(cloudCover, sunAltitude);
         const hour = futureTime.getHours();
+
+        if (futureTime > sunset) return; // if we haven't reached sunset hour yet, keep going
 
         const block = document.createElement("div");
         block.className = "forecast-block";
@@ -83,9 +79,14 @@ function renderForecast(forecastData, pubLat, pubLng) {
     });
 }
 
-
 // ── Fetch Verdict from Backend ────────────────────────────────────────────
-async function fetchVerdict(pub, cloudCover, sunAltitude, sunAzimuth, forecast) {
+async function fetchVerdict(
+    pub,
+    cloudCover,
+    sunAltitude,
+    sunAzimuth,
+    forecast,
+) {
     document.getElementById("pub-name").textContent = pub.title;
     document.getElementById("pub-address").textContent = pub.address;
     document.getElementById("verdict-text").textContent = "Getting verdict...";
@@ -113,7 +114,6 @@ async function fetchVerdict(pub, cloudCover, sunAltitude, sunAzimuth, forecast) 
     }
 }
 
-
 // ── Load Pubs onto the Map ────────────────────────────────────────────────
 async function loadPubs(lat, lng) {
     if (isLoading) return;
@@ -138,7 +138,9 @@ async function loadPubs(lat, lng) {
             const pubLat = pub.latitude;
             const pubLng = pub.longitude;
 
-            const weatherResponse = await fetch(`/weather?lat=${pubLat}&lng=${pubLng}`);
+            const weatherResponse = await fetch(
+                `/weather?lat=${pubLat}&lng=${pubLng}`,
+            );
             const weatherData = await weatherResponse.json();
             const cloudCover = weatherData.cloud_cover;
             const forecast = weatherData.forecast;
@@ -158,7 +160,13 @@ async function loadPubs(lat, lng) {
                     offset: [0, -12],
                 })
                 .on("click", () => {
-                    fetchVerdict(pub, cloudCover, sunAltitude, sunAzimuth, forecast);
+                    fetchVerdict(
+                        pub,
+                        cloudCover,
+                        sunAltitude,
+                        sunAzimuth,
+                        forecast,
+                    );
                 });
         }
     } catch (error) {
@@ -168,7 +176,6 @@ async function loadPubs(lat, lng) {
         isLoading = false;
     }
 }
-
 
 // ── Get User Location & Kick Everything Off ───────────────────────────────
 if (navigator.geolocation) {
@@ -185,12 +192,16 @@ if (navigator.geolocation) {
                 color: "#1A1208",
                 weight: 2,
                 fillOpacity: 1,
-            }).addTo(map).bindPopup("You are here");
+            })
+                .addTo(map)
+                .bindPopup("You are here");
 
             loadPubs(lat, lng);
         },
         (error) => {
-            setStatus("Location access denied — please enable location and refresh.");
+            setStatus(
+                "Location access denied — please enable location and refresh.",
+            );
             console.error(error);
         },
     );
