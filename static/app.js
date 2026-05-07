@@ -43,6 +43,58 @@ function closePanel() {
     document.getElementById("verdict-panel").classList.add("hidden");
 }
 
+// ── User Report ───────────────────────────────────────────────────────────
+let currentReport = {};
+
+function resetReport() {
+    currentReport = {};
+    document.getElementById("question-1").classList.remove("hidden");
+    document.getElementById("question-2").classList.add("hidden");
+    document.getElementById("question-3").classList.add("hidden");
+    document.getElementById("report-thanks").classList.add("hidden");
+}
+
+function hideReport() {
+    document.getElementById("report-section").classList.add("hidden");
+}
+
+function showQuestion2() {
+    document.getElementById("question-1").classList.add("hidden");
+    document.getElementById("question-2").classList.remove("hidden");
+}
+
+function setSunny(value) {
+    currentReport.sunny = value;
+    document.getElementById("question-2").classList.add("hidden");
+    document.getElementById("question-3").classList.remove("hidden");
+}
+
+function setGarden(value) {
+    currentReport.garden = value;
+    document.getElementById("question-3").classList.add("hidden");
+    document.getElementById("report-thanks").classList.remove("hidden");
+    submitReport();
+}
+
+async function submitReport() {
+    try {
+        await fetch("/report", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                pub_id: currentReport.pub_id,
+                pub_name: currentReport.pub_name,
+                sunny: currentReport.sunny,
+                garden: currentReport.garden,
+                cloud_cover: currentReport.cloud_cover,
+                sun_altitude: currentReport.sun_altitude,
+            }),
+        });
+    } catch (error) {
+        console.error("Error submitting report:", error);
+    }
+}
+
 // ── Search This Area Button ───────────────────────────────────────────────
 function searchArea() {
     const centre = map.getCenter();
@@ -93,7 +145,14 @@ async function fetchVerdict(
     document.getElementById("verdict-panel").classList.remove("hidden");
 
     renderForecast(forecast, pub.latitude, pub.longitude);
-
+    currentReport = {
+        pub_id: pub.id,
+        pub_name: pub.title,
+        cloud_cover: cloudCover,
+        sun_altitude: parseFloat(sunAltitude),
+    };
+    document.getElementById("report-section").classList.remove("hidden");
+    resetReport();
     try {
         const response = await fetch("/verdict", {
             method: "POST",
