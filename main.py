@@ -35,9 +35,9 @@ class UserReport(BaseModel):
     pub_name: str
     sunny: bool
     garden: str
-    cloud_cover: int
+    cloud_cover: float
     sun_altitude: float
-    timestamp: str
+
 
 def get_altitude_description(altitude):
     if altitude > 50:
@@ -217,11 +217,15 @@ async def get_verdict(data: SunData):
 async def post_report(data: UserReport):
     payload = {
         "pub": data.pub_id,
-        "sunny": sunny,
-        "garden_location": garden,
-        "time": timestamp,
-        "cloud_cover":cloud_cover
+        "pub_name": data.pub_name,
+        "sunny": data.sunny,
+        "garden_location": data.garden,
+        "cloud_cover":data.cloud_cover,
+        "sun_altitude": data.sun_altitude,
+        "time": datetime.datetime.now(datetime.timezone.utc)
     }
+    db.collection('reports').add(payload)
+    return {"status": "ok"}
 
 
 app.mount("/", StaticFiles(directory="static", html=True), name="static")

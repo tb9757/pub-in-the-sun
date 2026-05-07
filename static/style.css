@@ -190,6 +190,10 @@ header .tagline {
     cursor: pointer;
 }
 
+.hidden {
+    display: none;
+}
+
 .report-btn:hover {
     background: var(--amber);
 }
