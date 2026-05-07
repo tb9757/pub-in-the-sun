@@ -158,6 +158,62 @@ header .tagline {
     background: var(--mid);
 }
 
+#report-section {
+    border-top: 1px solid var(--amber);
+    padding-top: 14px;
+    margin-top: 14px;
+}
+
+.report-question {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 10px;
+}
+
+.report-buttons {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.report-btn {
+    flex: 1;
+    padding: 8px;
+    border-radius: 6px;
+    border: 2px solid var(--amber);
+    background: white;
+    color: var(--dark);
+    font-family: "Source Sans 3", sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.report-btn:hover {
+    background: var(--amber);
+}
+
+.yes-btn {
+    border-color: #4a9e4a;
+    color: #4a9e4a;
+}
+
+.yes-btn:hover {
+    background: #4a9e4a;
+    color: white;
+}
+
+.no-btn {
+    border-color: #9e4a4a;
+    color: #9e4a4a;
+}
+
+.no-btn:hover {
+    background: #9e4a4a;
+    color: white;
+}
+
 #close-btn {
     background: var(--dark);
     color: var(--amber);

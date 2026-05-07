@@ -47,6 +47,37 @@
             <p class="forecast-label">Next few hours</p>
             <div id="forecast-bars"></div>
         </div>
+        <!-- User Report Section -->
+        <div id="report-section">
+            <div id="question-1">
+                <p class="report-question">Are you at this pub right now?</p>
+                <div class="report-buttons">
+                    <button class="report-btn yes-btn" onclick="showQuestion2()">Yes</button>
+                    <button class="report-btn no-btn" onclick="hideReport()">No</button>
+                </div>
+            </div>
+
+            <div id="question-2" class="hidden">
+                <p class="report-question">Is the beer garden sunny right now?</p>
+                <div class="report-buttons">
+                    <button class="report-btn yes-btn" onclick="setSunny(true)">Yes ☀️</button>
+                    <button class="report-btn no-btn" onclick="setSunny(false)">No ☁️</button>
+                </div>
+            </div>
+
+            <div id="question-3" class="hidden">
+                <p class="report-question">Is the garden at the front or back of the pub?</p>
+                <div class="report-buttons">
+                    <button class="report-btn" onclick="setGarden('front')">Front</button>
+                    <button class="report-btn" onclick="setGarden('back')">Back</button>
+                    <button class="report-btn" onclick="setGarden('unknown')">Not sure</button>
+                </div>
+            </div>
+
+            <div id="report-thanks" class="hidden">
+                <p class="report-question">Thanks for your report! 🍺</p>
+            </div>
+        </div>
         <button id="close-btn" onclick="closePanel()">Close</button>
     </div>
 
