@@ -10,7 +10,7 @@ load_dotenv()
 app = FastAPI(title="Pub in the Sun")
 
 HERE_API = os.getenv('HERE_API_KEY')
-BASE_URL = "https://discover.search.hereapi.com/v1/discover?q=pub&limit=2"
+BASE_URL = "https://discover.search.hereapi.com/v1/discover?q=pub&limit=30"
 OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
 OPEN_ROUTER_API = os.getenv('OPEN_ROUTER_API_KEY')
 
@@ -54,7 +54,7 @@ def get_direction_description(azimuth):
         return "northwest"
 
 @app.get("/pubs")
-async def get_pubs(lat: float, lng: float, radius: int = 500):
+async def get_pubs(lat: float, lng: float, radius: int = 1000):
     pubs = []
     async with httpx.AsyncClient() as client:
         response = await client.get(
@@ -104,7 +104,7 @@ async def get_weather(lat: float, lng: float):
     data =  response.json()
     
     hour = datetime.datetime.now().hour
-    forecast_hours = [min(hour + i, 23) for i in range(0, 5)]
+    forecast_hours = [min(hour + i, 23) for i in range(0, 16)]
     forecast = [data['hourly']['cloud_cover'][h] for h in forecast_hours]
     
     result = {
@@ -175,7 +175,7 @@ async def get_verdict(data: SunData):
         "Content-Type": "application/json"
     }
     payload = {
-        "model": "anthropic/claude-sonnet-4-5",
+        "model": "meta-llama/llama-3.1-8b-instruct",
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": pub_data}
