@@ -72,7 +72,7 @@ def get_direction_description(azimuth):
 
 def get_recent_reports(pub_id):
     reports = db.collection('reports')\
-        .where('pub_id', '==', pub_id)\
+        .where(filter=firestore.FieldFilter('pub_id', '==', pub_id))\
         .order_by('time', direction=firestore.Query.DESCENDING)\
         .limit(5)\
         .stream()

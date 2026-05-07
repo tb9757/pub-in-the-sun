@@ -163,6 +163,7 @@ async function fetchVerdict(
                 cloud_cover: cloudCover,
                 sun_altitude: parseFloat(sunAltitude),
                 sun_azimuth: parseFloat(sunAzimuth),
+                pub_id: pub.id,
             }),
         });
         const verdict = await response.json();
