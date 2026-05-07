@@ -1,3 +1,4 @@
+import base64
 import datetime
 from dotenv import load_dotenv
 from fastapi import FastAPI
@@ -5,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 import firebase_admin
 from firebase_admin import credentials, firestore
 import httpx
+import json
 import os
 from pydantic import BaseModel
 
@@ -16,8 +18,13 @@ BASE_URL = "https://discover.search.hereapi.com/v1/discover?q=pub&limit=30"
 OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
 OPEN_ROUTER_API = os.getenv('OPEN_ROUTER_API_KEY')
 
-# connect to firestore database
-cred = credentials.Certificate(os.getenv('GOOGLE_CREDENTIALS'))
+cred_json = os.getenv('GOOGLE_CREDENTIALS_JSON')
+if cred_json:
+    cred_dict = json.loads(base64.b64decode(cred_json))
+    cred = credentials.Certificate(cred_dict)
+else:
+    cred = credentials.Certificate(os.getenv('GOOGLE_CREDENTIALS')) # connect to firestore database
+
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
