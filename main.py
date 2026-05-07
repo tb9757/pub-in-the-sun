@@ -24,6 +24,7 @@ db = firestore.client()
 weather_cache = {}
 
 class SunData(BaseModel):
+    pub_id: str
     pub_name: str
     address: str
     cloud_cover: int
@@ -68,6 +69,19 @@ def get_direction_description(azimuth):
         return "west"
     else:
         return "northwest"
+
+def get_recent_reports(pub_id):
+    reports = db.collection('reports')\
+        .where('pub_id', '==', pub_id)\
+        .order_by('time', direction=firestore.Query.DESCENDING)\
+        .limit(5)\
+        .stream()
+    
+    results = []
+    for report in reports:
+        r = report.to_dict()
+        results.append(r)
+    return results
 
 @app.get("/pubs")
 async def get_pubs(lat: float, lng: float, radius: int = 1000):
@@ -173,6 +187,13 @@ async def get_verdict(data: SunData):
     facing back garden which may be in shade. Cross reference this with the sun's 
     azimuth to give your best guess. Make clear it's a guess, but commit to it.
 
+    If previous user reports are provided, use them to inform your verdict:
+    - If multiple reports confirm the garden is at the front or back, treat this as reliable information and state it confidently rather than guessing.
+    - If reports confirm it was sunny under similar conditions (similar sun altitude and azimuth), weight your verdict positively.
+    - If reports confirm it was not sunny under similar conditions, weight your verdict negatively.
+    - Always mention if you are drawing on previous visitor reports — it builds trust and explains your reasoning.
+    - If reports are contradictory, acknowledge this and explain the uncertainty.
+
     If sun altitude is below 10 degrees, the sun is too low to feel warm regardless 
     of cloud cover. Say so.
 
@@ -180,10 +201,23 @@ async def get_verdict(data: SunData):
     Keep your verdict to 2-3 sentences. Never pretend to know which way the garden 
     faces with certainty."""
     
+    reports = get_recent_reports(data.pub_id)
+
+    if reports:
+        report_text = "\n".join([
+            f"- {r['time']}: garden is at the {r.get('garden_location', 'unknown')}, was sunny: {r['sunny']}"
+            for r in reports
+        ])
+    else:
+        report_text = "No previous reports for this pub."
+
     pub_data = f"""The pub is called {data.pub_name}, located 
     at {data.address}. Current cloud cover: {data.cloud_cover}%
     Sun altitude: {data.sun_altitude} degrees above the horizon ({get_altitude_description(data.sun_altitude)})
     Sun azimuth: {data.sun_azimuth} degrees ({get_direction_description(data.sun_azimuth)})
+
+    Previous user reports:
+    {report_text}
     """
 
     headers = {
