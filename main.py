@@ -2,6 +2,8 @@ import datetime
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+import firebase_admin
+from firebase_admin import credentials, firestore
 import httpx
 import os
 from pydantic import BaseModel
@@ -14,6 +16,11 @@ BASE_URL = "https://discover.search.hereapi.com/v1/discover?q=pub&limit=30"
 OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
 OPEN_ROUTER_API = os.getenv('OPEN_ROUTER_API_KEY')
 
+# connect to firestore database
+cred = credentials.Certificate(os.getenv('GOOGLE_CREDENTIALS'))
+firebase_admin.initialize_app(cred)
+db = firestore.client()
+
 weather_cache = {}
 
 class SunData(BaseModel):
@@ -22,6 +29,15 @@ class SunData(BaseModel):
     cloud_cover: int
     sun_altitude: float
     sun_azimuth: float
+
+class UserReport(BaseModel):
+    pub_id: str
+    pub_name: str
+    sunny: bool
+    garden: str
+    cloud_cover: int
+    sun_altitude: float
+    timestamp: str
 
 def get_altitude_description(altitude):
     if altitude > 50:
@@ -196,5 +212,16 @@ async def get_verdict(data: SunData):
         return f"Error contacting OpenRouter: {e}"
     except (KeyError, IndexError):
         return "Error: Unexpected response format from OpenRouter."
+
+@app.post("/report")
+async def post_report(data: UserReport):
+    payload = {
+        "pub": data.pub_id,
+        "sunny": sunny,
+        "garden_location": garden,
+        "time": timestamp,
+        "cloud_cover":cloud_cover
+    }
+
 
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
