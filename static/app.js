@@ -64,7 +64,7 @@ function renderForecast(forecastData, pubLat, pubLng) {
         const sunny = isSunny(cloudCover, sunAltitude);
         const hour = futureTime.getHours();
 
-        if (futureTime > sunset) return; // if we haven't reached sunset hour yet, keep going
+        if (futureTime > sunset) return; // stop rendering blocks after sunset
 
         const block = document.createElement("div");
         block.className = "forecast-block";
