@@ -47,7 +47,6 @@ function closePanel() {
 let currentReport = {};
 
 function resetReport() {
-    currentReport = {};
     document.getElementById("question-1").classList.remove("hidden");
     document.getElementById("question-2").classList.add("hidden");
     document.getElementById("question-3").classList.add("hidden");
@@ -77,6 +76,7 @@ function setGarden(value) {
 }
 
 async function submitReport() {
+    console.log("Submitting report:", currentReport);
     try {
         await fetch("/report", {
             method: "POST",
