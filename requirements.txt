@@ -1,4 +1,5 @@
 fastapi
+firebase-admin
 uvicorn
 httpx
 python-dotenv
