@@ -213,8 +213,8 @@ async def get_verdict(data: SunData):
 
     pub_data = f"""The pub is called {data.pub_name}, located 
     at {data.address}. Current cloud cover: {data.cloud_cover}%
-    Sun altitude: {data.sun_altitude} degrees above the horizon ({get_altitude_description(data.sun_altitude)})
-    Sun azimuth: {data.sun_azimuth} degrees ({get_direction_description(data.sun_azimuth)})
+    Sun altitude: ({get_altitude_description(data.sun_altitude)})
+    Sun azimuth: ({get_direction_description(data.sun_azimuth)})
 
     Previous user reports:
     {report_text}
@@ -225,7 +225,7 @@ async def get_verdict(data: SunData):
         "Content-Type": "application/json"
     }
     payload = {
-        "model": "meta-llama/llama-3.1-8b-instruct",
+        "model": "anthropic/claude-sonnet-4-5",
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": pub_data}
@@ -250,7 +250,7 @@ async def get_verdict(data: SunData):
 @app.post("/report")
 async def post_report(data: UserReport):
     payload = {
-        "pub": data.pub_id,
+        "pub_id": data.pub_id,
         "pub_name": data.pub_name,
         "sunny": data.sunny,
         "garden_location": data.garden,
