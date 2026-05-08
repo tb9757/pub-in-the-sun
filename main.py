@@ -188,11 +188,15 @@ async def get_verdict(data: SunData):
     north or east facing gardens may be in shade."
 
     Use the pub's street address to reason about likely garden orientation, 
-    considering that most beer gardens are at the back of the pub. 
-    A pub on the south side of a street will likely have a south facing back garden 
-    which catches the sun well. A pub on the north side will likely have a north 
-    facing back garden which may be in shade. Cross reference this with the sun's 
-    azimuth to give your best guess. Make clear it's a guess, but commit to it.
+    considering that the beer garden is likely to be at the back of the pub. 
+    A pub on the north side of a street faces south towards the street, 
+    meaning its back garden faces NORTH — which is typically bad for sunshine. 
+    A pub on the south side of a street faces north towards the street, 
+    meaning its back garden faces SOUTH — which is typically good for afternoon sunshine. 
+    This is the opposite of what might seem intuitive — always reason carefully about 
+    which way the BACK of the building faces, not the front.
+    Cross reference this with the sun's azimuth to give your best guess. 
+    Make clear it's a guess, but commit to it.
 
     If previous user reports are provided, use them to inform your verdict:
     - If multiple reports confirm the garden is at the front or back, treat this as reliable information and state it confidently rather than guessing.
